@@ -6,9 +6,9 @@ const WELCOME = "Advent of Code 2022"
 
 const LIGHTS = @[
 "❄          ❄         ❄         ❄         ❄         ❄",
-" o         o         o         o         o        o",
-"   o     o   o     o   o     o   o     o   o     o",
-"      o         o         o         o         o"
+" ○         ○         ○         ○         ○        ○",
+"   ○     ○   ○     ○   ○     ○   ○     ○   ○     ○",
+"      ○         ○         ○         ○         ○"
 ]
 
 const LIGHT_LEN = LIGHTS[0].len
@@ -29,18 +29,30 @@ proc drawIntro(padding: int) =
 proc drawLights(padding: int, hlRow: int) =
   var i = 0
   for x in LIGHTS:
-    let style = if i == hlRow: styleBright else: styleDim
-    stdout.styledWrite(" ".repeat(padding), style, fgRed, x, resetStyle)
+    if i == hlRow:
+      stdout.styledWrite(" ".repeat(padding), styleBright, fgRed, x.replace("○", "●"), resetStyle)
+    else:
+      stdout.styledWrite(" ".repeat(padding), styleDim, fgRed, x, resetStyle)
     stdout.write("\n")
     inc i
 
 proc drawScreen(hlRow, lightPadding, introPadding: int) =
-  stdout.eraseScreen()
+  stdout.setCursorPos(0, 0)
   drawIntro(introPadding)
   drawLights(lightPadding, hlRow)
 
+proc cleanQuit() {.noconv.} =
+  resetAttributes()
+  stdout.showCursor()
+  quit(0)
+
+proc cleanUp() =
+  resetAttributes()
+  stdout.showCursor()
+
 when isMainModule:
-  exitprocs.addExitProc(resetAttributes)
+  exitprocs.addExitProc(cleanUp)
+  setControlCHook(cleanQuit)
 
   let
     width = terminalSize()[0]
@@ -55,6 +67,9 @@ when isMainModule:
     lightPadding = halfWidth - lightMiddle
     introPadding = halfWidth - introMiddle
   var hlRow = 0
+
+  stdout.hideCursor()
+  stdout.eraseScreen()
 
   while true:
     drawScreen(hlRow, lightPadding, introPadding)
