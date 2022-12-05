@@ -1,7 +1,7 @@
 import std/os
 import std/streams
 
-template withFile*(f: untyped, filename: string, mode: FileMode, body: untyped) =
+template withStream*(f: untyped, filename: string, mode: FileMode, body: untyped) =
     let fn = filename
     if fileExists(fn):
         var f = newFileStream(fn, mode)
