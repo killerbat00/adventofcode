@@ -43,8 +43,26 @@ proc partOne() =
 
     echo "Part one: ", enclosedRanges
 
+proc overlapping(left: seq[int], right: seq[int]): bool =
+    if left[1] < right[0] or right[1] < left[0]:
+        return false
+    return true
+
 proc partTwo() =
-    echo "Part two: "
+    var
+        overlappingRanges = 0
+
+    let fn = "./input/day_4.txt"
+    withStream(f, fn, fmRead):
+        for line in lines(f):
+            let
+                assignments = fmtLine(line)
+                left = assignments[0 ..< 2]
+                right = assignments[2 ..< assignments.len]
+
+            if overlapping(left, right):
+                overlappingRanges += 1
+    echo "Part two: ", overlappingRanges
 
 when isMainModule:
     partOne()
