@@ -1,4 +1,4 @@
-from utils import withFile
+from utils import withStream
 from std/strutils import split, parseInt
 from std/sequtils import map
 from std/streams import lines
@@ -29,7 +29,7 @@ proc partOne() =
     let fn = "./input/day_4.txt"
     #let fn = testData
 
-    withFile(f, fn, fmRead):
+    withStream(f, fn, fmRead):
         for line in lines(f):
             let
                 assignments = fmtLine(line)

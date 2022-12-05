@@ -1,11 +1,12 @@
-from utils import withFile
+from utils import withStream
 from std/strutils import splitWhitespace
+from std/streams import lines
 
 proc partOne() =
     var
         totalScore = 0
 
-    withFile(f, "./input/day_2.txt", fmRead):
+    withStream(f, "./input/day_2.txt", fmRead):
         for line in lines(f):
             if line != "":
                 let
@@ -49,7 +50,7 @@ proc partTwo() =
     var
         totalScore = 0
 
-    withFile(f, "./input/day_2.txt", fmRead):
+    withStream(f, "./input/day_2.txt", fmRead):
         for line in lines(f):
             if line != "":
                 let

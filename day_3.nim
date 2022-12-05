@@ -1,13 +1,14 @@
-from utils import withFile
+from utils import withStream
 from std/strutils import isUpperAscii
 from std/sequtils import toSeq
+from std/streams import lines
 import sets
 
 proc partOne() =
     var
         totalScore = 0
 
-    withFile(f, "./input/day_3.txt", fmRead):
+    withStream(f, "./input/day_3.txt", fmRead):
         for line in lines(f):
             if line != "":
                 let
@@ -28,7 +29,7 @@ proc partTwo() =
         totalScore = 0
         peerGroup = newSeq[string]()
 
-    withFile(f, "./input/day_3.txt", fmRead):
+    withStream(f, "./input/day_3.txt", fmRead):
         for line in lines(f):
             if line != "":
                 peerGroup.add(line)
