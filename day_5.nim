@@ -45,7 +45,35 @@ proc partOne() =
     echo "Part one: ", $topCrates.join("")
 
 proc partTwo() =
-    echo "Part two: "
+    var
+        stackData = newSeq[seq[string]]()
+        movements = newSeq[seq[int]]()
+
+    let fn = "./input/day_5.txt"
+    #let fn = testData
+
+    withStream(f, fn, fmRead):
+        for line in lines(f):
+            if line == "":
+                continue
+            if line[0].isDigit():
+                stackData.add(@[line.split(" ")[1 .. ^1]])
+            else:
+                let lineParts = line.split(" ")
+                movements.add(@[@[lineParts[1], lineParts[3], lineParts[5]].map(parseInt)])
+
+    for move in movements:
+        let
+            count = move[0]
+            frm = move[1]
+            to = move[2]
+
+        let toMove = stackData[frm - 1][^count .. ^1]
+        stackData[frm - 1].setLen(stackData[frm - 1].len - count)
+        stackData[to - 1].add(toMove)
+
+    var topCrates = stackData.mapIt(it[^1])
+    echo "Part two: ", $topCrates.join("")
 
 when isMainModule:
     partOne()
