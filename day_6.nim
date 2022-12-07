@@ -1,6 +1,4 @@
 from utils import withStream
-from std/strutils import split, parseInt, isDigit, join
-from std/sequtils import mapIt, map, toSeq
 from std/streams import lines, newStringStream, StringStream, atEnd, readChar
 from std/sets import toHashSet, len
 
@@ -12,7 +10,7 @@ nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg
 zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw
 """
 
-proc findStartOfPacket(input: StringStream): int =
+proc findStartOfPacket(input: StringStream, uniqueChars: int): int =
     var
         buffer = newSeq[char]()
         curr: char
@@ -20,8 +18,8 @@ proc findStartOfPacket(input: StringStream): int =
     while not input.atEnd:
         curr = input.readChar()
         buffer.add(curr)
-        if (buffer.len == 4):
-            if sets.len(buffer.toHashSet()) == 4:
+        if (buffer.len == uniqueChars):
+            if sets.len(buffer.toHashSet()) == uniqueChars:
                 return count + 1
             buffer = buffer[1 .. ^1]
         count += 1
@@ -40,12 +38,26 @@ proc partOne() =
             if line == "":
                 continue
             inputLine = newStringStream(line)
-            results.add(findStartOfPacket(inputLine))
+            results.add(findStartOfPacket(inputLine, 4))
 
     echo "Part one: ", $results
 
 proc partTwo() =
-    echo "Part two: "
+    var
+        inputLine: StringStream
+        results = newSeq[int]()
+
+    let fn = "./input/day_6.txt"
+    #let fn = testData
+
+    withStream(f, fn, fmRead):
+        for line in lines(f):
+            if line == "":
+                continue
+            inputLine = newStringStream(line)
+            results.add(findStartOfPacket(inputLine, 14))
+
+    echo "Part two: ", $results
 
 when isMainModule:
     partOne()
