@@ -1,5 +1,5 @@
 from utils import withStream
-from std/streams import lines, newStringStream, StringStream, atEnd, readChar
+from std/streams import lines, newStringStream, StringStream, atEnd, readChar, close
 from std/sets import toHashSet, len
 
 const testData = """
@@ -39,6 +39,7 @@ proc partOne() =
                 continue
             inputLine = newStringStream(line)
             results.add(findStartOfPacket(inputLine, 4))
+            inputLine.close()
 
     echo "Part one: ", $results
 
@@ -56,6 +57,7 @@ proc partTwo() =
                 continue
             inputLine = newStringStream(line)
             results.add(findStartOfPacket(inputLine, 14))
+            inputLine.close()
 
     echo "Part two: ", $results
 
