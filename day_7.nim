@@ -1,5 +1,7 @@
 from utils import withStream
 from std/streams import lines
+from std/strutils import split, parseInt
+import std/tables
 
 const testData = """
 $ cd /
@@ -27,6 +29,60 @@ $ ls
 7214296 k
 """
 
+type Directory = ref object
+    name: string
+    size: int
+    parent: Directory
+    subdirs: seq[Directory]
+    files: ref Table[string, int]
+
+proc emulate(commands: seq[string]) =
+    var
+        rootDirectory = Directory(name: "/", size: 0, parent: nil, subDirs: newSeq[Directory](), files: newTable[string, int]())
+        parsingOutput = false
+        currentDir = rootDirectory
+
+    for line in commands:
+        if parsingOutput:
+            if line[0] == '$':
+                parsingOutput = false
+            else:
+                let
+                    parts = line.split(' ')
+                    name = parts[1]
+                    size = parts[0]
+                if size == "dir":
+                    var newDir = Directory(name: name, size: 0, parent: currentDir, subDirs: newSeq[Directory](), files: newTable[string, int]())
+                    currentDir.subdirs.add(newDir)
+                else:
+                    let size = parseInt(size)
+                    currentDir.files[name] = size
+                    currentDir.size += size
+                    var tmpDir = currentDir
+                    while not isNil(tmpDir.parent):
+                        tmpDir.parent.size += size
+                        tmpDir = tmpDir.parent
+
+        if line[0] == '$':
+            let
+                commandParts = line.split(' ')
+                command = commandParts[1]
+            if command == "cd":
+                let args = commandParts[2]
+                if args == currentDir.name:
+                    continue
+                elif args == "..":
+                    if not isNil(currentDir.parent):
+                        currentDir = currentDir.parent
+                else:
+                    var newDir = Directory(name: args, size: 0, parent: currentDir, subDirs: newSeq[Directory](), files: newTable[string, int]())
+                    currentDir = newDir
+            elif command == "ls":
+                parsingOutput = true
+                continue
+
+    echo rootDirectory.size
+
 proc partOne() =
     var
         commands = newSeq[string]()
@@ -40,7 +96,8 @@ proc partOne() =
                 continue
             commands.add(line)
 
-    echo "Part one: ", $commands
+    emulate(commands)
+    echo "Part one: "
 
 proc partTwo() =
     echo "Part two: "
