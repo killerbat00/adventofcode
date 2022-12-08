@@ -1,7 +1,10 @@
 from utils import withStream
-from std/streams import lines
-from std/strutils import split, parseInt
-import std/tables
+from streams import lines
+import 
+    algorithm,
+    sequtils,
+    strformat,
+    strutils
 
 const testData = """
 $ cd /
@@ -29,66 +32,106 @@ $ ls
 7214296 k
 """
 
-type Directory = ref object
-    name: string
-    size: int
-    parent: Directory
-    subdirs: seq[Directory]
-    files: ref Table[string, int]
+type 
+    File = ref object
+        name: string
+        size: float
 
-proc emulate(commands: seq[string]) =
+    Directory = ref object
+        name: string
+        parent: Directory
+        subdirs: seq[Directory]
+        files: seq[File]
+        totalSize: float
+
+var allDirs: seq[Directory] = @[]
+proc recurseDirs(curDir: Directory, dirSize: float = 0): float =
+    var dSize = dirSize
+    for subDir in curDir.subDirs:
+        dSize += recurseDirs(subDir, dirSize)
+    for file in curDir.files:
+        dSize += file.size
+    
+    curDir.totalSize = dSize
+    allDirs.add(curDir)
+    return dSize
+
+proc emulate(commands: seq[string]): Directory =
     var
-        rootDirectory = Directory(name: "/", size: 0, parent: nil, subDirs: newSeq[Directory](), files: newTable[string, int]())
-        parsingOutput = false
-        currentDir = rootDirectory
+        root = Directory(name: "/", parent: nil, subDirs: newSeq[Directory](), files: newSeq[File]())
+        curDir = root
 
     for line in commands:
-        if parsingOutput:
-            if line[0] == '$':
-                parsingOutput = false
-            else:
-                let
-                    parts = line.split(' ')
-                    name = parts[1]
-                    size = parts[0]
-                if size == "dir":
-                    var newDir = Directory(name: name, size: 0, parent: currentDir, subDirs: newSeq[Directory](), files: newTable[string, int]())
-                    currentDir.subdirs.add(newDir)
-                else:
-                    let size = parseInt(size)
-                    currentDir.files[name] = size
-                    currentDir.size += size
-                    var tmpDir = currentDir
-                    while not isNil(tmpDir.parent):
-                        tmpDir.parent.size += size
-                        tmpDir = tmpDir.parent
+        let parts = line.split(' ')
 
-        if line[0] == '$':
-            let
-                commandParts = line.split(' ')
-                command = commandParts[1]
-            if command == "cd":
-                let args = commandParts[2]
-                if args == currentDir.name:
+        if parts[0] == "dir":
+            curDir.subDirs.add(Directory(name: parts[1], parent: curDir, subDirs: newSeq[Directory](), files: newSeq[File]()))
+            continue
+
+        if parts[0] == "$":
+            if parts[1] == "cd":
+                let dest = parts[2]
+
+                if dest == curDir.name: #same dir
+                    continue 
+                elif dest == "..": #move to parent dir
+                    if curDir.name == "/":
+                        continue
+                    elif isNil(curDir.parent):
+                        quit(-1)
+                    else:
+                        curDir = curDir.parent
+                        continue
+                else: #move to child dir
+                    var found = false
+                    for subDir in curDir.subDirs:
+                        if subDir.name == dest:
+                            curDir = subDir
+                            found = true
+                            break
+                    if found:
+                        continue
+                    var newDir = Directory(name: dest, parent: curDir, subDirs: newSeq[Directory](), files: newSeq[File]())
+                    curDir.subDirs.add(newDir)
+                    curDir = newDir
                     continue
-                elif args == "..":
-                    if not isNil(currentDir.parent):
-                        currentDir = currentDir.parent
-                else:
-                    var newDir = Directory(name: args, size: 0, parent: currentDir, subDirs: newSeq[Directory](), files: newTable[string, int]())
-                    currentDir = newDir
-            elif command == "ls":
-                parsingOutput = true
-                continue
+        else:
+            let 
+                size = parts[0].parsefloat()
+                name = parts[1]
+            curDir.files.add(File(name: name, size: size))
 
-    echo rootDirectory.size
+    return root
 
 proc partOne() =
-    var
-        commands = newSeq[string]()
+    var commands = newSeq[string]()
 
-    #let fn = "./input/day_7.txt"
-    let fn = testData
+    let fn = "./input/day_7.txt"
+    #let fn = testData
+
+    withStream(f, fn, fmRead):
+        for line in lines(f):
+            if line == "":
+                continue
+            commands.add(line)
+    
+    let rootDir = emulate(commands)
+    discard recurseDirs(rootDir)
+
+    var smallDirs: seq[int] = @[]
+    for d in allDirs:
+        if d.totalSize <= 100000.float:
+            smallDirs.add(d.totalSize.int)
+
+    echo &"Part one: {int(smallDirs.foldl(a + b))}"
+
+proc partTwo() =
+    # reset
+    allDirs.delete(0..allDirs.high)
+    var commands = newSeq[string]()
+    
+    let fn = "./input/day_7.txt"
+    #let fn = testData
 
     withStream(f, fn, fmRead):
         for line in lines(f):
@@ -96,11 +139,23 @@ proc partOne() =
                 continue
             commands.add(line)
 
-    emulate(commands)
-    echo "Part one: "
+    let 
+        rootDir = emulate(commands)
+        ourSize = int(recurseDirs(rootDir))
+        totalSize = 70000000
+        totalSizeNeeded = 30000000
+        freeSpace = totalSize - ourSize
+        neededToFree = totalSizeNeeded - freeSpace
 
-proc partTwo() =
-    echo "Part two: "
+    var mightDelete: seq[Directory] = @[]
+    for d in allDirs:
+        if d.totalSize >= neededToFree.float:
+            mightDelete.add(d)
+    
+    mightDelete.sort do (x, y: Directory) -> int:
+        result = cmp(x.totalSize, y.totalSize)
+
+    echo &"Part two: `rm -rf {mightDelete[0].name} #size={mightDelete[0].totalSize.int}`"
 
 when isMainModule:
     partOne()
