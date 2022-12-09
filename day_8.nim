@@ -1,8 +1,6 @@
 from utils import withStream
 from streams import lines
 import strutils
-import sets
-import strformat
 
 const TEST_DATA = """30373
 25512
@@ -55,8 +53,8 @@ proc partOne() =
     echo "Part one: ", numVisible
 
 proc partTwo() =
-    #let fn = "./input/day_8.txt"
-    let fn = TEST_DATA
+    let fn = "./input/day_8.txt"
+    #let fn = TEST_DATA
 
     var heightMap = newSeq[seq[int]]()
     
@@ -66,8 +64,48 @@ proc partTwo() =
             for c in line:
                 row.add(($c).parseInt())
             heightMap.add(row)
+
+    var scenicScores = newSeq[int]()
+
+    for y in 1 ..< heightMap.len - 1:
+        for x in 1 ..< heightMap[y].len - 1:
+            let tree = heightMap[y][x]
+            var canSeeRight = 0
+            var canSeeLeft = 0
+            var canSeeUp = 0
+            var canSeeDown = 0
             
-    echo "Part two: "
+            # right
+            for x2 in x+1 ..< heightMap[y].len:
+                if heightMap[y][x2] <= tree:
+                    canSeeRight += 1
+                if heightMap[y][x2] >= tree:
+                    break
+
+            # left
+            for x2 in 0 ..< x:
+                if heightMap[y][x2] <= tree:
+                    canSeeLeft += 1
+                if heightMap[y][x2] >= tree:
+                    break
+
+            # down
+            for y2 in y+1 ..< heightMap.len:
+                if heightMap[y2][x] <= tree:
+                    canSeeDown += 1
+                if heightMap[y2][x] >= tree:
+                    break
+
+            # up
+            for y2 in 0 ..< y:
+                if heightMap[y2][x] <= tree:
+                    canSeeUp += 1
+                if heightMap[y2][x] >= tree:
+                    break
+
+            scenicScores.add(canSeeRight * canSeeLeft * canSeeUp * canSeeDown)
+
+    echo "Part two: ", max(scenicScores)
 
 when isMainModule:
     partOne()
