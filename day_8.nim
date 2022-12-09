@@ -1,6 +1,7 @@
 from utils import withStream
 from streams import lines
 import strutils
+import strformat
 
 const TEST_DATA = """30373
 25512
@@ -64,36 +65,29 @@ proc partTwo() =
     for y in 1 ..< heightMap.len - 1:
         for x in 1 ..< heightMap[y].len - 1:
             let tree = heightMap[y][x]
-            var canSeeRight = 0
-            var canSeeLeft = 0
-            var canSeeUp = 0
-            var canSeeDown = 0
+            var
+                canSeeRight = 0
+                canSeeLeft = 0
+                canSeeUp = 0
+                canSeeDown = 0
             
-            # right
             for x2 in x+1 ..< heightMap[y].len:
-                if heightMap[y][x2] <= tree:
-                    canSeeRight += 1
+                canSeeRight += 1
                 if heightMap[y][x2] >= tree:
                     break
 
-            # left
-            for x2 in 0 ..< x:
-                if heightMap[y][x2] <= tree:
-                    canSeeLeft += 1
+            for x2 in countdown(x-1, 0):
+                canSeeLeft += 1
                 if heightMap[y][x2] >= tree:
                     break
 
-            # down
             for y2 in y+1 ..< heightMap.len:
-                if heightMap[y2][x] <= tree:
-                    canSeeDown += 1
+                canSeeDown += 1
                 if heightMap[y2][x] >= tree:
                     break
 
-            # up
-            for y2 in 0 ..< y:
-                if heightMap[y2][x] <= tree:
-                    canSeeUp += 1
+            for y2 in countdown(y-1, 0):
+                canSeeUp += 1
                 if heightMap[y2][x] >= tree:
                     break
 
