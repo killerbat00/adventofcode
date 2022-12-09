@@ -26,28 +26,22 @@ proc partOne() =
     for y in 1 ..< heightMap.len - 1:
         for x in 1 ..< heightMap[y].len - 1:
             let tree = heightMap[y][x]
-            var right = newSeq[int]()
-            var left = newSeq[int]()
-            var up = newSeq[int]()
-            var down = newSeq[int]()
+            var
+                rightMax = 0
+                leftMax = 0
+                upMax = 0
+                downMax = 0
             
-            # right
-            for x2 in x+1 ..< heightMap[y].len:
-                right.add(heightMap[y][x2])
+            rightMax = max(heightMap[y][x+1 ..< heightMap[y].len])
+            leftMax = max(heightMap[y][0 ..< x])
 
-            # left
-            for x2 in 0 ..< x:
-                left.add(heightMap[y][x2])
-
-            # down
             for y2 in y+1 ..< heightMap.len:
-                down.add(heightMap[y2][x])
+                downMax = max(downMax, heightMap[y2][x])
 
-            # up
             for y2 in 0 ..< y:
-                up.add(heightMap[y2][x])
+                upMax = max(upMax, heightMap[y2][x])
 
-            if tree > max(right) or tree > max(left) or tree > max(up) or tree > max(down):
+            if tree > rightMax or tree > leftMax or tree > upMax or tree > downMax:
                 numVisible += 1
 
     echo "Part one: ", numVisible
