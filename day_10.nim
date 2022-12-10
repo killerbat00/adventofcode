@@ -10,13 +10,20 @@ type
         ins: string
         val: Option[int]
 
+    Screen = object
+        pixels: seq[seq[string]]
+        width: int
+        height: int
+        cur_pos: tuple[x: int, y: int]
+
     CPU = object
+        screen: ref Screen
         cycle: int
         X: int
         regHistory: seq[int] #value of X at cycle i
         ip: int
         instructions: seq[Instruction]
-
+    
 const TEST_DATA = """
 addx 15
 addx -11
@@ -166,6 +173,30 @@ noop
 noop
 """
 
+func initScreen(): ref Screen =
+    result = new(Screen)
+    result.width = 40
+    result.height = 6
+    result.cur_pos = (x: 0, y: 0)
+    result.pixels = newSeq[seq[string]]()
+    for y in 0 ..< result.height:
+        result.pixels.add(newSeq[string]())
+        for x in 0 ..< result.width:
+            result.pixels[y].add(".")
+
+proc draw(s: ref Screen, xPos: int) =
+    var curPixel = "."
+    for p in countup(xPos - 1, xPos + 1):
+        if s.cur_pos.x == p:
+            curPixel = "#"
+
+    s.pixels[s.cur_pos.y][s.cur_pos.x] = curPixel
+
+    s.cur_pos.x += 1
+    if s.cur_pos.x >= s.width:
+        s.cur_pos.x = 0
+        s.cur_pos.y += 1
+
 func initCPU(): ref CPU = 
     result = new(CPU)
     result.cycle = 0
@@ -174,10 +205,12 @@ func initCPU(): ref CPU =
     result.regHistory.add(-1) # cycles are 1 indexed, add a placeholder value
     result.ip = 0
     result.instructions = newSeq[Instruction]()
+    result.screen = initScreen()
 
 proc oneCycle(cpu: ref CPU) =
     cpu.cycle += 1
     cpu.regHistory.add(cpu.X)
+    cpu.screen.draw(cpu.X)
 
 proc oneInstruction(cpu: ref CPU) =
     let ins = cpu.instructions[cpu.ip]
@@ -218,12 +251,27 @@ proc partOne() =
 
 proc partTwo() =
     let fn = "./input/day_10.txt"
+
+    var cpu = initCPU()
     
     withStream(f, fn, fmRead):
         for line in lines(f):
-            discard line
-            #echo line
-    echo "Part two: "
+            let iParts = line.split(" ")
+            if iParts.len == 2:
+                let val = iParts[1].parseInt()
+                cpu.instructions.add(Instruction(ins: iParts[0], val: some(val)))
+            else:
+                cpu.instructions.add(Instruction(ins: iParts[0]))
+    
+    while cpu.ip < cpu.instructions.len:
+        oneInstruction(cpu)
+    
+    let screen = cpu.screen.pixels
+    echo "Part Two:"
+    for y in 0 ..< screen.len:
+        for x in 0 ..< screen[y].len:
+            stdout.write(screen[y][x])
+        stdout.write("\n")
 
 when isMainModule:
     partOne()
