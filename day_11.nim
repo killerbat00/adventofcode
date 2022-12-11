@@ -1,5 +1,3 @@
-from utils import withStream
-from streams import lines
 import strutils
 import sugar
 import algorithm
@@ -15,8 +13,10 @@ type
         op_code: (int) -> int
         test: string
         test_code: (int) -> bool
-        true_monkey: int
-        false_monkey: int
+        true_monkey: int 
+        false_monkey: int 
+
+var mod_num: int = 9699690
         
 func `$`(monkey: ref Monkey): string =
     result = "Monkey: " & " items: " & $monkey.items & " op: " & monkey.op & " test: " & monkey.test & " true: " & $monkey.true_monkey & " false: " & $monkey.false_monkey
@@ -46,12 +46,10 @@ func initMonkey(monkeyData: seq[string]): ref Monkey =
     result.true_monkey = monkeyData[4].split(" ")[^1].parseInt
     result.false_monkey = monkeyData[5].split(" ")[^1].parseInt
 
-var itemsInspected = @[0, 0, 0, 0, 0, 0, 0, 0]
-
-proc doRound(monkeys: seq[ref Monkey]) =
+proc doRound(monkeys: seq[ref Monkey], itemsInspected: var seq[int], modNum: int = 0) =
     for i in 0..monkeys.len - 1:
         let monkey = monkeys[i]
-
+        
         # no items, go to next monkey
         if monkey.items.len == 0:
             continue
@@ -59,7 +57,11 @@ proc doRound(monkeys: seq[ref Monkey]) =
         for item in monkey.items:
             itemsInspected[i] += 1
             var itemWorried = monkey.op_code(item)
-            itemWorried = itemWorried div 3
+            
+            if modNum == 0:
+                itemWorried = itemWorried div 3
+            else:
+                itemWorried = itemWorried mod mod_num
 
             if monkey.test_code(itemWorried):
                 monkeys[monkey.true_monkey].items.add(itemWorried)
@@ -76,9 +78,11 @@ proc partOne() =
     
     for i in countup(0, monkeyData.len - 7, 7):
         monkeys.add(initMonkey(monkeyData[i..<i+6]))
+    
+    var itemsInspected = collect(newSeq, (for i in 0..<monkeys.len: 0))
 
-    for i in 0..19:
-        doRound(monkeys)
+    for i in 0..<20:
+        doRound(monkeys, itemsInspected)
 
     itemsInspected.sort()
 
@@ -88,11 +92,37 @@ proc partOne() =
     echo &"Part one: {itemsInspected[^1] * itemsInspected[^2]}"
 
 proc partTwo() =
-    withStream(f, data, fmRead):
-        for line in lines(f):
-            discard line
-    echo "Part two: "
+    var monkeys = newSeq[ref Monkey]()
+
+    let monkeyData = collect(newSeq):
+        for line in data.split("\n"):
+            line.strip()
+    
+    for i in countup(0, monkeyData.len - 7, 7):
+        monkeys.add(initMonkey(monkeyData[i..<i+6]))
+    
+    var itemsInspected = collect(newSeq, (for i in 0..<monkeys.len: 0))
+
+    # to keep worry levels in check, we find the lowest
+    # common multiple of all the test numbers (which happen
+    # to be prime). We can safely mod our worry level for
+    # each item by this number without impacting the result
+    # of the test for recipient monkey
+    var modNum = 1
+    for m in monkeys:
+        modNum *= m.test.split(" ")[^1].parseInt
+
+
+    for i in 0..<10000:
+        doRound(monkeys, itemsInspected, modNum)
+
+    itemsInspected.sort()
+
+    # monkey business is calculated by multiplying the number of 
+    # items inspected by the two monkeys who inspected the most
+    # items
+    echo &"Part two: {itemsInspected[^1] * itemsInspected[^2]}"
 
 when isMainModule:
     partOne()
-    #partTwo()
+    partTwo()
