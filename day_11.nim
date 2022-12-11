@@ -2,6 +2,8 @@ from utils import withStream
 from streams import lines
 import strutils
 import sugar
+import algorithm
+import strformat
 
 const fn = "./input/day_11.txt"
 const data = slurp(fn)
@@ -40,7 +42,7 @@ func initMonkey(monkeyData: seq[string]): ref Monkey =
 
     result.test = monkeyData[3].split(":")[1].strip()
     let testCode = result.test.split(" ")
-    result.test_code = (worryLevel: int) => worryLevel / testCode[^1].parseInt == 0
+    result.test_code = (worryLevel: int) => worryLevel mod testCode[^1].parseInt == 0
     result.true_monkey = monkeyData[4].split(" ")[^1].parseInt
     result.false_monkey = monkeyData[5].split(" ")[^1].parseInt
 
@@ -49,6 +51,7 @@ var itemsInspected = @[0, 0, 0, 0, 0, 0, 0, 0]
 proc doRound(monkeys: seq[ref Monkey]) =
     for i in 0..monkeys.len - 1:
         let monkey = monkeys[i]
+
         # no items, go to next monkey
         if monkey.items.len == 0:
             continue
@@ -57,7 +60,7 @@ proc doRound(monkeys: seq[ref Monkey]) =
             itemsInspected[i] += 1
             var itemWorried = monkey.op_code(item)
             itemWorried = itemWorried div 3
-            
+
             if monkey.test_code(itemWorried):
                 monkeys[monkey.true_monkey].items.add(itemWorried)
             else:
@@ -74,12 +77,15 @@ proc partOne() =
     for i in countup(0, monkeyData.len - 7, 7):
         monkeys.add(initMonkey(monkeyData[i..<i+6]))
 
-    for i in 0..20:
+    for i in 0..19:
         doRound(monkeys)
-    
-    echo itemsInspected
 
-    echo "Part one: "
+    itemsInspected.sort()
+
+    # monkey business is calculated by multiplying the number of 
+    # items inspected by the two monkeys who inspected the most
+    # items
+    echo &"Part one: {itemsInspected[^1] * itemsInspected[^2]}"
 
 proc partTwo() =
     withStream(f, data, fmRead):
