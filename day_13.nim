@@ -1,6 +1,7 @@
 from utils import withStream
 from streams import lines
 
+import algorithm
 import strutils
 import strformat
 import sequtils
@@ -157,12 +158,30 @@ proc partOne() =
 
 proc partTwo() =
     let fn = "./input/day_13.txt"
+    #let fn = TEST_DATA
+    var packets = newSeq[Packet]()
 
     withStream(f, fn, fmRead):
         for line in lines(f):
-            echo line
-    echo "Part two: "
+            if line.len > 0:
+                packets.add(parsePacket(line))
+
+    let div1 = Packet(kind: ptList, listVal: @[Packet(kind: ptInt, intVal: 2)])
+    let div2 = Packet(kind: ptList, listVal: @[Packet(kind: ptInt, intVal: 6)])
+    packets.add(div1)
+    packets.add(div2)
+
+    packets.sort()
+    var i1 = -1
+    var i2 = -1
+    for i in 0..<packets.len:
+        if packets[i] == div1:
+            i1 = i + 1
+        elif packets[i] == div2:
+            i2 = i + 1
+
+    echo &"Part two: {i1 * i2}"
 
 when isMainModule:
-    partOne()
-    #partTwo()
+    #partOne()
+    partTwo()
